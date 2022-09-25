@@ -10,12 +10,12 @@ module.exports = {
     },
     module: {
         rules: [{
-            test: /\.ts$/,
+            test: /\.tsx?$/,
             use: 'ts-loader',
-            include: [path.resolve(__dirname, 'src/client')]
+            include: [path.resolve(__dirname, 'src/client')],
         }]
     },
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js', '.tsx']
     }
 }
