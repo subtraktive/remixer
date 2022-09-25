@@ -1,1 +1,1 @@
-console.log("SOME TEST sdfsdfsd fest")
+console.log("SOME fest")
