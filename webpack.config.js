@@ -3,7 +3,7 @@ const path = require('path')
 module.exports = {
     devtool: 'eval-source-map',
     mode: 'development',
-    entry: './src/client/index.ts',
+    entry: './src/client/index.tsx',
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'public')
