@@ -27,8 +27,8 @@ const instrumentMap: instrumentMapType = {
 }
 
 const audioConfig: audioConfigType = {
-    'bass': __dirname + '/../../audio/Bass-1.wav',
-    'drums': __dirname + '/../../audio/DRUMS-1.wav'
+    'bass': __dirname + '/../../../audio/Bass-1.wav',
+    'drums': __dirname + '/../../../audio/DRUMS-1.wav'
 }
 
 const getFilePath = (id: number) => {
@@ -49,8 +49,9 @@ const updateTheEmptyFile = (writable: Writable, id: number) => {
 }
 
 router.get('/stream/:id', async(req: Request, res: Response) => {
-
+    
     const id = req.params.id;
+    console.log("STREAMING AUDIO =========", id )
     try {
         const writeFile = fs.createWriteStream(`audio/audio-${id}.mp3`)
 
