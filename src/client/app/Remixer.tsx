@@ -8,19 +8,38 @@ class Remixer extends React.Component<any, any> {
         super(props);
         this.state = {
             showTracks: false,
-            noOfTracks: 2
+            noOfLayers: 0,
+            layers: [],
+            id: null,
+            genre: 'hiphop',
+            duration: 30
         }
     }
 
-    displayTracks = () => this.setState({showTracks: true}) 
+    displayTracks = () =>{
+        let {genre, duration} = this.state;
+        fetch(`http://localhost:8080/api/track/meta?genre=${genre}&duration=${duration}`).then(res => res.json()).then(data=>{
+            console.log("Got data",data)
+            this.setState({
+                showTracks: true,
+                layers: data.layers,
+                id: data.id
+            }) 
+        })
+        
+    }
+
 
     render() {
-        let {showTracks} = this.state;
+        let {showTracks, layers, id} = this.state;
         return (<div>
                 { showTracks ? 
-                (<div>
-                    <audio id="track1" autoPlay={true} controls src="/api/stream/1">TRACK1</audio>
-                    <audio id="track2" autoPlay={true} controls src="/api/stream/2">TRACK2</audio>
+                (<div data-id={id}>
+                    {
+                        layers.map((layer: string, index: number) => {
+                            return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
+                        })
+                    }
                 </div>) : 
                 <div onClick={this.displayTracks}>REMIX</div>
     }
