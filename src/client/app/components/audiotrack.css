@@ -1,0 +1,27 @@
+.buffered {
+    height: 20px;
+    position: relative;
+    background: #555;
+    width: 300px;
+}
+
+#bufferedAmount {
+    display: block;
+    height: 100%;
+    background-color: #777;
+    width: 0;
+}
+
+.progress {
+    /* margin-top: -20px; */
+    height: 20px;
+    position: relative;
+    width: 300px;
+}
+
+#progressAmount {
+    display: block;
+    height: 100%;
+    background-color: #595;
+    width: 0;
+}

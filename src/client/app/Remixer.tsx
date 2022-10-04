@@ -37,7 +37,8 @@ class Remixer extends React.Component<any, any> {
                 (<div data-id={id}>
                     {
                         layers.map((layer: string, index: number) => {
-                            return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
+                            return <AudioTrack showControls={true} source={`/api/stream/${layer}`} autoPlay={true} index={index} />
+                            //return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
                         })
                     }
                 </div>) : 

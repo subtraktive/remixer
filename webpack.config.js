@@ -13,10 +13,19 @@ module.exports = {
             test: /\.tsx?$/,
             use: 'ts-loader',
             include: [path.resolve(__dirname, 'src/client')],
+        }, {
+            test: /\.css$/,
+            use: ["style-loader", {
+                loader: "css-loader",
+                options: {
+                    importLoaders: 1,
+                    modules: true,
+                },
+            }],
         }]
     },
     resolve: {
-        extensions: ['.ts', '.js', '.tsx']
+        extensions: ['.ts', '.js', '.tsx', '.css']
     },
     devServer: {
         open: true,

@@ -1,8 +1,11 @@
 import express, {Request, Response} from 'express';
-import fs, { read, writeFileSync } from 'fs';
+import fs, { read, writeFileSync, WriteStream } from 'fs';
 import { basename } from 'path';
+import StreamLimiter from '../util';
+
 const crypto = require('crypto');
 const router = express.Router()
+const LIMIT_RATE = 4; // 5 kb per ms
 //import { getMimeType } from 'stream-mime-type';
 // import path from 'path'
 // import { dirname } from 'path';
@@ -10,6 +13,8 @@ const router = express.Router()
 
 // const __dirname = dirname(fileURLToPath(
 //     import.meta.url));
+
+
 
 import { Stream, Writable } from 'stream';
 
@@ -29,8 +34,8 @@ const instrumentMap: instrumentMapType = {
 }
 
 const audioConfig: audioConfigType = {
-    'bass': __dirname + '/../../../audio/Bass-1.wav',
-    'drums': __dirname + '/../../../audio/DRUMS-1.wav'
+    'bass': __dirname + '/../../../audio/BASS_FULL.wav',
+    'drums': __dirname + '/../../../audio/DRUMS_FULL.wav'
 }
 
 const getFilePath = (id: number) => {
@@ -44,18 +49,18 @@ router.get('/', (req: Request, res: Response) => {
 })
 
 
-const updateTheEmptyFile = (writable: Writable, id: number) => {
+const updateTheEmptyFile = (file: WriteStream, id: number) => {
     // WRITE TO WRITABLE STREAM HERE 
     const readFile = fs.createReadStream(getFilePath(id));
-    readFile.pipe(writable)
+    readFile.pipe(file)
 }
 
 const fileRef = new Map()
 
-
+let count = 0;
 
 router.get('/track/meta', async(req: Request, res: Response) => {
-    
+    count = 0
     const {duration, genre} = req.query
     if(!duration || !genre){
         res.status(400).send({
@@ -84,18 +89,23 @@ router.get('/stream/:layerId', async(req: Request, res: Response) => {
     
     const id = req.params.layerId;
     console.log("STREAMING AUDIO =========", id )
+    count++;
     try {
         const writeFile = fs.createWriteStream(`audio/audio-${id}.mp3`)
-
+        const limiter = new StreamLimiter()
+        const rand = Math.random()*100
+        console.log("RAND IS", rand);
+        limiter.setLimit(rand > 40 ? LIMIT_RATE: 5)
         //const { stream, mime } = await getMimeType(writeFile);
         writeFile.on('pipe', (data) => {
-            data.pipe(res)
+            data.pipe(limiter).pipe(res) 
         })
-        updateTheEmptyFile(writeFile, Math.random()*100 > 50 ? 1: 2 )
+        updateTheEmptyFile(writeFile, count )
 
     } catch (e) {
         console.error("THE E IS", e);
     }
+    
 
 })
 
