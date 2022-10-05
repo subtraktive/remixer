@@ -50,8 +50,15 @@ router.get('/', (req: Request, res: Response) => {
 
 
 const updateTheEmptyFile = (file: WriteStream, id: number) => {
-    // WRITE TO WRITABLE STREAM HERE 
-    const readFile = fs.createReadStream(getFilePath(id));
+    // WRITE TO WRITABLE STR   AM HERE 
+    const path = getFilePath(id)
+    const readFile = fs.createReadStream(path, { highWaterMark: 1024 });
+    const stat = fs.statSync(path)
+    console.log(`THE CONTENT SIZE for ID: ${id} is`, stat.size)
+    readFile.on('data', (chunk) => {
+        console.log("GOT CHUCNK LENGHT OF", chunk.length, " and the multiplye is", 64 * 1024)
+        //chunk.pipe(readFile)
+    })
     readFile.pipe(file)
 }
 
@@ -61,7 +68,7 @@ let count = 0;
 
 router.get('/track/meta', async(req: Request, res: Response) => {
     count = 0
-    const {duration, genre} = req.query
+    const {duration, genre, type} = req.query
     if(!duration || !genre){
         res.status(400).send({
             'error': 'Please provide duration and genre'
@@ -74,12 +81,19 @@ router.get('/track/meta', async(req: Request, res: Response) => {
     const layers = []
     for(let i = 0; i < trackCount; i++){
         let layerId = crypto.randomUUID()
-        let writeFile = fs.createWriteStream(`audio/audio-${layerId}.mp3`)
         let id = `layer-${layerId}`
         count++
-        layers.push(`/audio/audio-${layerId}.mp3`)
-        updateTheEmptyFile(writeFile, count )
+        if(type == "remix-1") {
+            layers.push(id)
+        } else {
+            let writeFile = fs.createWriteStream(`audio/audio-${layerId}.mp3`)
+            layers.push(`/audio/audio-${layerId}.mp3`)
+            updateTheEmptyFile(writeFile, count )
+        }
+        //const stat = fs.statSync(`audio/audio-${layerId}.mp3`)
+        //console.log(`THE CONTENT SIZE for EMPTY ---------------------- ID: ${layerId} is`, stat.size)
     }
+    count=0;
     trackMapping.set('duration', duration)
     trackMapping.set('genre', genre)
     trackMapping.set('layers', layers)
@@ -105,12 +119,13 @@ router.get('/stream/sample/:limit', async(req: Request, res: Response) => {
 })
 
 router.get('/stream/:layerId', async(req: Request, res: Response) => {
-    
+    let chunkLength = 64 * 1024; // default chunk size, can be increased using highWaterMark
+    let chunkCount = 0;
     const id = req.params.layerId;
     console.log("STREAMING AUDIO =========", id )
     count++;
     try {
-        const writeFile = fs.createWriteStream(`public/audio/audio-${id}.mp3`)
+        const writeFile = fs.createWriteStream(`audio/audio-${id}.mp3`)
         const limiter = new StreamLimiter()
         const rand = Math.random()*100
         console.log("RAND IS", rand);
@@ -118,6 +133,9 @@ router.get('/stream/:layerId', async(req: Request, res: Response) => {
         //const { stream, mime } = await getMimeType(writeFile);
         res.setHeader("Content-Type", "audio/mpeg")
         writeFile.on('pipe', (data) => {
+            chunkCount++
+            chunkLength *= chunkCount;
+            console.log("NOW CHUNKLENGTH IS", chunkLength)
             data.pipe(res)
             //data.pipe(limiter).pipe(res) 
         })

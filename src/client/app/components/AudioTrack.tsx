@@ -6,7 +6,8 @@ type audioTrackProps = {
     source: string,
     showControls: boolean,
     autoPlay: boolean,
-    index: number
+    index: number,
+    type: string
 }
 
 
@@ -29,6 +30,7 @@ class AudioTrack extends React.Component<audioTrackProps> {
         const duration = audioFile.duration;
         const bufferRef = this.bufferRef.current
         const buffered = audioFile.buffered
+        console.log("GET META DATA", audioFile)
         // if (typeof (audioFile.buffered) !== 'undefined' && audioFile.buffered.length > 0) {
         //     const z = (audioFile.buffered.end(0) / duration) * 100;
         //     console.log("THE Z VALUE OF BUFFER IS", z)
@@ -81,11 +83,15 @@ class AudioTrack extends React.Component<audioTrackProps> {
         console.log("CAN PLAY AUDIO ---------------------------")
     }
 
+    onTimeChange(e: any) {
+        console.log("DURATION CHANGED EVENT ?????????????????? ===============")
+    }
+
     render(): React.ReactNode {
-        const {index, source, autoPlay, showControls} = this.props
+        const {index, source, autoPlay, showControls, type} = this.props
         return (
             <div className={`styles.layers.concat(styles.layer-${index})`}>
-                <audio onCanPlay={this.canPlay} onTimeUpdate={this.updateTime} onLoadedData={this.onDownload} id={`audio-${index}`} src={source} autoPlay={autoPlay} controls={showControls} />
+                <audio onDurationChange={this.onTimeChange} preload={"metadata"} onCanPlay={this.canPlay} onTimeUpdate={this.updateTime} onLoadedData={this.onDownload} id={`audio-${index}`} src={source} autoPlay={autoPlay} controls={showControls} />
                 <div className={styles.buffered}>
                     <span ref={this.bufferRef} id={styles.bufferedAmount}></span>
                 </div>
