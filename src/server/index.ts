@@ -17,7 +17,8 @@ const app: Application = express();
 
 
 app.use('/api', api)
-app.use(express.static("public"));
-
+app.use(express.static('public'));
+app.use('/audio', express.static('audio'))
+// app.use("/audio", express.static("audio"));
 app.listen(3000)
 console.log("STARTED SERVER AT 3000")

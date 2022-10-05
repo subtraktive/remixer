@@ -34,13 +34,19 @@ class Remixer extends React.Component<any, any> {
         let {showTracks, layers, id} = this.state;
         return (<div>
                 { showTracks ? 
-                (<div data-id={id}>
-                    {
-                        layers.map((layer: string, index: number) => {
-                            return <AudioTrack showControls={true} source={`/api/stream/${layer}`} autoPlay={true} index={index} />
-                            //return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
-                        })
-                    }
+                (<div>
+                    
+                    <div data-id={id}>
+                        {
+                            layers.map((layer: string, index: number) => {
+                                return <AudioTrack showControls={true} source={layer} autoPlay={true} index={index} />
+                                //return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
+                            })
+                        }
+                    </div>
+                    <div>
+                        {/* <AudioTrack showControls={true} source={`/audio/DRUMS_FULL.wav`} autoPlay={true} index={10001} /> */}
+                    </div>
                 </div>) : 
                 <div onClick={this.displayTracks}>REMIX</div>
     }

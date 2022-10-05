@@ -74,15 +74,34 @@ router.get('/track/meta', async(req: Request, res: Response) => {
     const layers = []
     for(let i = 0; i < trackCount; i++){
         let layerId = crypto.randomUUID()
+        let writeFile = fs.createWriteStream(`audio/audio-${layerId}.mp3`)
         let id = `layer-${layerId}`
-        layers.push(id)
+        count++
+        layers.push(`/audio/audio-${layerId}.mp3`)
+        updateTheEmptyFile(writeFile, count )
     }
     trackMapping.set('duration', duration)
     trackMapping.set('genre', genre)
     trackMapping.set('layers', layers)
     trackMapping.set('id', trackId)
     fileRef.set(trackId, trackMapping)
+    //res.setHeader("Content-Type", "audio/mpeg")
     res.status(200).send(Object.fromEntries(trackMapping))
+})
+
+router.get('/stream/sample/:limit', async(req: Request, res: Response) => {
+    const shouldLimit = req.params.limit;
+    const readFile = fs.createReadStream(getFilePath(1));
+    if(shouldLimit == "limit") {
+        const limiter = new StreamLimiter()
+        const rand = Math.random()*100
+        res.setHeader("Content-Type", "audio/wav")
+        limiter.setLimit(rand > 40 ? LIMIT_RATE: 5)
+        readFile.pipe(limiter).pipe(res);
+    } else {
+        readFile.pipe(res);
+    }
+
 })
 
 router.get('/stream/:layerId', async(req: Request, res: Response) => {
@@ -91,14 +110,16 @@ router.get('/stream/:layerId', async(req: Request, res: Response) => {
     console.log("STREAMING AUDIO =========", id )
     count++;
     try {
-        const writeFile = fs.createWriteStream(`audio/audio-${id}.mp3`)
+        const writeFile = fs.createWriteStream(`public/audio/audio-${id}.mp3`)
         const limiter = new StreamLimiter()
         const rand = Math.random()*100
         console.log("RAND IS", rand);
         limiter.setLimit(rand > 40 ? LIMIT_RATE: 5)
         //const { stream, mime } = await getMimeType(writeFile);
+        res.setHeader("Content-Type", "audio/mpeg")
         writeFile.on('pipe', (data) => {
-            data.pipe(limiter).pipe(res) 
+            data.pipe(res)
+            //data.pipe(limiter).pipe(res) 
         })
         updateTheEmptyFile(writeFile, count )
 

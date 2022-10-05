@@ -29,7 +29,11 @@ class AudioTrack extends React.Component<audioTrackProps> {
         const duration = audioFile.duration;
         const bufferRef = this.bufferRef.current
         const buffered = audioFile.buffered
-        console.log("ON DOWNLOAD", duration, " and biffere length", buffered.length, 'and start', buffered.start(0), " and end", buffered.end(0) )
+        // if (typeof (audioFile.buffered) !== 'undefined' && audioFile.buffered.length > 0) {
+        //     const z = (audioFile.buffered.end(0) / duration) * 100;
+        //     console.log("THE Z VALUE OF BUFFER IS", z)
+        // }
+        // //console.log("ON DOWNLOAD", duration, " and biffere length", buffered.length, 'and start', buffered.start(0), " and end", buffered.end(0) )
         // if (duration > 0 && duration !== Infinity) {
         //   for (let i = 0; i < audioFile.buffered.length; i++) {
         //     console.log("WIDTH CALCUATION ????", (audioFile.buffered.end(audioFile.buffered.length - 1 - i) * 100) / duration)
@@ -37,7 +41,7 @@ class AudioTrack extends React.Component<audioTrackProps> {
         //       audioFile.buffered.start(audioFile.buffered.length - 1 - i) <
         //       audioFile.currentTime
         //     ) {
-                
+        //         console.log("UPDATE????")
         //         if(bufferRef) {
         //             bufferRef.style.width = `${
         //                 (audioFile.buffered.end(audioFile.buffered.length - 1 - i) * 100) / duration
@@ -55,17 +59,21 @@ class AudioTrack extends React.Component<audioTrackProps> {
         const duration = audioFile.duration;
         const progressRef = this.progressRef.current
         const buffered = audioFile.buffered
+        const bufferRef = this.bufferRef.current
         console.log("The data ", e)
         //console.log("================ON DOWNLOAD", duration, " and biffere length", buffered.length, 'and start', buffered.start(0), " and end", buffered.end(0) )
-        if (typeof (audioFile.buffered) !== 'undefined' && audioFile.buffered.length > 0) {
-            const z = (audioFile.buffered.end(0) / duration) * 100;
-            console.log("THE Z VALUE OF BUFFER IS", z)
-        }
+        
        // console.log("the update time getting called 4 times per sec", duration)
         if (duration > 0 && progressRef) {
             progressRef.style.width = `${
                 audioFile.currentTime / duration * 100
             }%`;
+        }
+
+        if (typeof (audioFile.buffered) !== 'undefined' && audioFile.buffered.length > 0 && bufferRef) {
+            const z = (audioFile.buffered.end(0) / duration) * 100;
+            console.log("THE Z VALUE OF BUFFER IS", z)
+            bufferRef.style.width = `${z}%`;
         }
     }
 

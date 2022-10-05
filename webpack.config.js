@@ -29,11 +29,18 @@ module.exports = {
     },
     devServer: {
         open: true,
-        proxy: {
-            '/api/*': {
-                target: "http://localhost:3000",
-                secure: false,
-            }
-        }
+        proxy: [
+            //     {
+            //     '/api/*': {
+            //         target: "http://localhost:3000",
+            //         secure: false,
+            //     }
+            // }, 
+            {
+                context: ['/audio', '/api'],
+                target: 'http://localhost:3000',
+            },
+        ]
+
     }
 }
