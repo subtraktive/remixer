@@ -3,5 +3,8 @@ import React from 'react';
 import * as ReactDOM from 'react-dom';
 import Remixer from './app/Remixer';
 
+const audioCtx = new AudioContext();
 
-ReactDOM.render(<Remixer />, document.getElementById('root'));
+
+
+ReactDOM.render(<Remixer audioCtx={audioCtx} />, document.getElementById('root'));
