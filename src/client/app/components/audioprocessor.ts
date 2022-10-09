@@ -112,6 +112,7 @@ class MasterOutput {
     }
   
     stopPlaying() {
+      console.log("STOP PLAYING CACLLED")
       if (this.audioBufferSources.length > 0) {
         for (let audioBufferSource of this.audioBufferSources) {
           audioBufferSource && audioBufferSource.stop();

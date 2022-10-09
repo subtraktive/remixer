@@ -34,8 +34,8 @@ const instrumentMap: instrumentMapType = {
 }
 
 const audioConfig: audioConfigType = {
-    'bass': __dirname + '/../../../audio/BASS_FULL.wav',
-    'drums': __dirname + '/../../../audio/DRUMS_FULL.wav'
+    'bass': __dirname + '/../../../audio/BASS-2.wav',
+    'drums': __dirname + '/../../../audio/DRUMS-2.wav'
 }
 
 const getFilePath = (id: number) => {
@@ -125,13 +125,13 @@ router.get('/stream/:layerId', async(req: Request, res: Response) => {
     console.log("STREAMING AUDIO =========", id )
     count++;
     try {
-        const writeFile = fs.createWriteStream(`audio/audio-${id}.mp3`)
+        const writeFile = fs.createWriteStream(`audio/audio-${id}.wav`)
         const limiter = new StreamLimiter()
         const rand = Math.random()*100
         console.log("RAND IS", rand);
         limiter.setLimit(rand > 40 ? LIMIT_RATE: 5)
         //const { stream, mime } = await getMimeType(writeFile);
-        res.setHeader("Content-Type", "audio/mpeg")
+        res.setHeader("Content-Type", "audio/wav")
         writeFile.on('pipe', (data) => {
             chunkCount++
             chunkLength *= chunkCount;
