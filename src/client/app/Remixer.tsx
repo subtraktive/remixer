@@ -5,6 +5,10 @@ import SoundBuffer from './Soundbuffer';
 
 export const SAMPLE_RATE = 44100
 
+interface lenObjType{
+  [key: number]: number
+}
+
 const convertFloat32toUInt8 = (buffer: any) => {  // incoming data is an ArrayBuffer
   let incomingData = new Uint8Array(buffer); // create a uint8 view on the ArrayBuffer
   let i:number, l = incomingData.length; // length, we need this for the loop
@@ -200,10 +204,14 @@ class Remixer extends React.Component<any, any> {
         fetch(`http://localhost:8080/api/track/meta?genre=${genre}&duration=${duration}&type=${type}`).then(res => res.json()).then(data=>{
             console.log("Got data",data)
             let {layers} = data;
+            let lenObj: lenObjType = {}
+          
             layers.map((layer: any, index: number) => { 
                 console.log("LAYER IS", layer);
                 this.audioProcessor[index] = new SoundBuffer(audioCtx, SAMPLE_RATE, 10, true) // new MasterOutput(this.samplesCallback, audioCtx, index)
-                let len = 0;
+                let len1 = 0;
+                let len2 = 0;
+                lenObj[index] = 0;
                 fetch(`http://localhost:8080/api/stream/${layer}`).then((response:any) => {
                     const reader = response.body.getReader();
                     return new ReadableStream({
@@ -234,14 +242,18 @@ class Remixer extends React.Component<any, any> {
                             for (var jj = 0; jj < floatAudioData.length; ++jj) {
                               floatAudioData[jj] = d2.getFloat32(jj * Float32Array.BYTES_PER_ELEMENT, true);
                             }
-                            len = floatAudioData.length;
+
+                            
+                            //len1 += floatAudioData.length;
                             
                             if(!self.trackBuffer[index]) {
                               self.trackBuffer[index] = []
                             }
 
+
                             self.trackBuffer[index].push(floatAudioData)
-                            if(self.trackBuffer[0].length > 2000 && self.trackBuffer[1].length > 2000) {
+                            lenObj[index] += floatAudioData.length;
+                            if(lenObj[0] > SAMPLE_RATE*5 && lenObj[1] > SAMPLE_RATE*5) {
                               self.playAllQueuedBuffers(index)
                             }
 
