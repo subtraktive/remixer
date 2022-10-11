@@ -125,17 +125,6 @@ class Remixer extends React.Component<any, any> {
         console.log("END PLAYING")
         this.audioProcessor[index].stopPlaying()
       }
-      console.log("====================================================== CHUNKLENGTH IN CB IS", chunkLength)
-      let frequency = 220.0;
-      // for (let sampleIndex = 0; sampleIndex <= processor.computeSamplesCount; ++sampleIndex) {
-      //         let currentSeconds = (sampleIndex + processor.currentSamplesOffset) / processor.sampleRate;
-        
-      //         //For a sine wave.
-      //         processor.channels[0][sampleIndex] = 0.005 * Math.sin(currentSeconds * 2.0 * Math.PI * frequency);
-        
-      //         //Copy the right channel from the left channel.
-      //         processor.channels[1][sampleIndex] = processor.channels[0][sampleIndex];
-      //       }
       for (let sampleIndex = 0; sampleIndex <= processor.computeSamplesCount; sampleIndex = sampleIndex + chunkLength) {
 
         //processor.audioBuffer.copyToChannel(buffer[sampleIndex], 1, 0 )
@@ -212,6 +201,7 @@ class Remixer extends React.Component<any, any> {
                 let len1 = 0;
                 let len2 = 0;
                 lenObj[index] = 0;
+                self.trackBuffer[index] = []
                 fetch(`http://localhost:8080/api/stream/${layer}`).then((response:any) => {
                     const reader = response.body.getReader();
                     return new ReadableStream({
@@ -227,7 +217,7 @@ class Remixer extends React.Component<any, any> {
                               controller.close();
                               //self.audioProcessor[index].stopPlaying()
                               //self.endBufferStream()
-                             //self.playAllQueuedBuffers(index)
+                             self.playAllQueuedBuffers(index)
                              console.log("++++++++++++++++++++++++++++++++++++======================END",self.trackBuffer[index].length)
                               return;
                             }
@@ -246,56 +236,17 @@ class Remixer extends React.Component<any, any> {
                             
                             //len1 += floatAudioData.length;
                             
-                            if(!self.trackBuffer[index]) {
-                              self.trackBuffer[index] = []
-                            }
+                            // if(!self.trackBuffer[index]) {
+                            //   self.trackBuffer[index] = []
+                            // }
 
 
                             self.trackBuffer[index].push(floatAudioData)
                             lenObj[index] += floatAudioData.length;
-                            if(lenObj[0] > SAMPLE_RATE*5 && lenObj[1] > SAMPLE_RATE*5) {
-                              self.playAllQueuedBuffers(index)
-                            }
-
-
-                            //self.audioProcessor[index].addChunk(floatAudioData)
-                            //self.queueAudioBuffer(value, index)
-                           
-
-                              // let d2 = new DataView(value.buffer);
-
-                              // let floatData = new Float32Array(d2.byteLength / Float32Array.BYTES_PER_ELEMENT);
-                              // for (let jj = 0; jj < floatData.length; ++jj) {
-                              //   floatData[jj] = d2.getFloat32(jj * Float32Array.BYTES_PER_ELEMENT, true);
-                              // }
-                              // console.log("LENGTH IS", floatData.length)
-                              // let buffer = audioCtx.createBuffer(2, floatData.length, SAMPLE_RATE*2);
-                              // buffer.getChannelData(0).set(floatData);
-                              // buffer.getChannelData(1).set(floatData);
-                              // let source = audioCtx.createBufferSource();
-                              // source.buffer = buffer;
-                              // source.connect(audioCtx.destination);
-                              // source.start(self.startTime);
-                              
-                              // self.startTime += buffer.duration;
-
-
-                            // let arrayBuffer = new ArrayBuffer(value.length)
-                            // var bufferView = new Uint8Array(arrayBuffer)
-                            // for(let i = 0; i < value.length; i++) {
-                            //   bufferView[i] = value[i]
+                            // if(lenObj[0] > SAMPLE_RATE*5 && lenObj[1] > SAMPLE_RATE*5) {
+                            //   self.playAllQueuedBuffers(index)
                             // }
-                            // audioCtx.decodeAudioData(arrayBuffer, function(buffer: any) {
-                            //   console.log("GETTING BUFFER", buffer )
-                            //   var source = audioCtx.createBufferSource();
-                            //   source.buffer = buffer;
-                            //   source.connect(audioCtx.destination);
-                      
-                            //   source.start(self.startTime);
-                            //   self.startTime += buffer.duration;
-                            // });
-                            //}
-                            //self.queueAudioBuffer(value, index);
+
                             return pump();
                           });
                         }
