@@ -85,7 +85,6 @@ class Remixer extends React.Component<any, any> {
       for (var jj = 0; jj < floatAudioData.length; ++jj) {
         floatAudioData[jj] = d2.getFloat32(jj * Float32Array.BYTES_PER_ELEMENT, true);
       }
-      
 
       let chunkLength = floatAudioData.length
      // console.log("CHUNK LENGTH IS", chunkLength)
@@ -103,14 +102,11 @@ class Remixer extends React.Component<any, any> {
         this.trackSampleLength[index] = 0
       }
       this.trackSampleLength[index] += chunkLength
-      //console.log("GETTING FLOAT DATA", floatAudioData.length, "For the init chunks", this.trackSampleLength[index])
       this.fullTrackBuffer[index].push(floatAudioData)
       this.trackBuffer[index].push(floatAudioData)
       console.log(`The queue length for ${index}`, this.trackBuffer[index].length, " and total chunk length", this.trackSampleLength[index])
-      //console.log("MINBUFFER COUNT IS", minBufferCount, " and our internal buffer is", this.trackBuffer[index].length, "trackbuffer", this.trackBuffer[index] )
       if(this.trackSampleLength[index] > minBufferCount) { //!this.playing[index]
         //this.playing[index] = true 
-        console.log("**********************PLAY*************************")
        // audioProcessor.startPlaying()
        this.playAllQueuedBuffers(index)
       }
@@ -125,31 +121,20 @@ class Remixer extends React.Component<any, any> {
         console.log("END PLAYING")
         this.audioProcessor[index].stopPlaying()
       }
-      console.log("====================================================== CHUNKLENGTH IN CB IS", chunkLength)
-      let frequency = 220.0;
-      // for (let sampleIndex = 0; sampleIndex <= processor.computeSamplesCount; ++sampleIndex) {
-      //         let currentSeconds = (sampleIndex + processor.currentSamplesOffset) / processor.sampleRate;
-        
-      //         //For a sine wave.
-      //         processor.channels[0][sampleIndex] = 0.005 * Math.sin(currentSeconds * 2.0 * Math.PI * frequency);
-        
-      //         //Copy the right channel from the left channel.
-      //         processor.channels[1][sampleIndex] = processor.channels[0][sampleIndex];
-      //       }
+
       for (let sampleIndex = 0; sampleIndex <= processor.computeSamplesCount; sampleIndex = sampleIndex + chunkLength) {
 
-        //processor.audioBuffer.copyToChannel(buffer[sampleIndex], 1, 0 )
         console.log("THE ARG IS ==========", buffer[sampleIndex])
         if(buffer[sampleIndex]) {
           processor.audioBuffer.copyToChannel(buffer[sampleIndex], 1, 0)
           processor.audioBuffer.copyToChannel(buffer[sampleIndex], 0, 0)
         }
-        // processor.channels[0][sampleIndex] = buffer[sampleIndex]
-        // processor.channels[1][sampleIndex] = processor.channels[0][sampleIndex] 
       }
       this.trackBuffer[index].splice(0, processor.computeSamplesCount)
     }
 
+    // Important to schedule multiple tracks to the same time, else the buffers get mixed up and won't play simulatenously
+    // Thats why we're setting track 0 and track1 to play at the same time here, write better logic to update it dynamically
     playAllQueuedBuffers(index: number){
       let {audioCtx} = this.props;
       //this.startTime = 0;
@@ -158,17 +143,8 @@ class Remixer extends React.Component<any, any> {
         console.log("THE LENGTH IS ", this.trackBuffer[index].length, " with index", index)
         let floatData1 = this.trackBuffer[0].shift()
         let floatData2 = this.trackBuffer[1].shift()
-      //}
-      //for(let i = 0; i < len; i++) {
-        //len = this.trackBuffer[index].length;
-       //let floatData = this.trackBuffer[index][i]
-        // let d2 = new DataView(data.buffer);
-
-        // let floatData = new Float32Array(d2.byteLength / Float32Array.BYTES_PER_ELEMENT);
-        // for (let jj = 0; jj < floatData.length; ++jj) {
-        //   floatData[jj] = d2.getFloat32(jj * Float32Array.BYTES_PER_ELEMENT, true);
-        // }
-        //console.log("LENGTH IS", floatData.length)
+        if(!floatData1 || !floatData2) return
+   
         let buffer1 = audioCtx.createBuffer(2, floatData1.length, SAMPLE_RATE*2);
         let buffer2 = audioCtx.createBuffer(2, floatData2.length, SAMPLE_RATE*2);
         buffer1.getChannelData(0).set(floatData1);
@@ -191,9 +167,7 @@ class Remixer extends React.Component<any, any> {
         this.startTime1 +=  source1.buffer.duration;
         this.startTime2 +=  source2.buffer.duration;
       }
-      // if(this.trackBuffer[index].length > 20 ) {
-      //   this.playing[index] = false;
-      // }
+
       
     }
 
@@ -208,10 +182,11 @@ class Remixer extends React.Component<any, any> {
           
             layers.map((layer: any, index: number) => { 
                 console.log("LAYER IS", layer);
-                this.audioProcessor[index] = new SoundBuffer(audioCtx, SAMPLE_RATE, 10, true) // new MasterOutput(this.samplesCallback, audioCtx, index)
+                //this.audioProcessor[index] = new SoundBuffer(audioCtx, SAMPLE_RATE, 10, true) // new MasterOutput(this.samplesCallback, audioCtx, index)
                 let len1 = 0;
                 let len2 = 0;
                 lenObj[index] = 0;
+                self.trackBuffer[index] = []
                 fetch(`http://localhost:8080/api/stream/${layer}`).then((response:any) => {
                     const reader = response.body.getReader();
                     return new ReadableStream({
@@ -233,69 +208,21 @@ class Remixer extends React.Component<any, any> {
                             }
                             // Enqueue the next data chunk into our target stream
                             if(!value) return
-                            //console.log("GETTING VALUE", value, " awith done ", done, " and length of each ", value.length)
                             controller.enqueue(value);  
 
                             var d2 = new DataView(value.buffer);
-
                             var floatAudioData = new Float32Array(d2.byteLength / Float32Array.BYTES_PER_ELEMENT);
                             for (var jj = 0; jj < floatAudioData.length; ++jj) {
                               floatAudioData[jj] = d2.getFloat32(jj * Float32Array.BYTES_PER_ELEMENT, true);
                             }
 
-                            
-                            //len1 += floatAudioData.length;
-                            
-                            if(!self.trackBuffer[index]) {
-                              self.trackBuffer[index] = []
-                            }
-
 
                             self.trackBuffer[index].push(floatAudioData)
                             lenObj[index] += floatAudioData.length;
-                            if(lenObj[0] > SAMPLE_RATE*5 && lenObj[1] > SAMPLE_RATE*5) {
+                            // Find a better way to queue all buffers and then schedule them to play
+                            if(self.trackBuffer[0].length > 10 && self.trackBuffer[1].length > 10) { // Hardcoded for now will be changed later
                               self.playAllQueuedBuffers(index)
                             }
-
-
-                            //self.audioProcessor[index].addChunk(floatAudioData)
-                            //self.queueAudioBuffer(value, index)
-                           
-
-                              // let d2 = new DataView(value.buffer);
-
-                              // let floatData = new Float32Array(d2.byteLength / Float32Array.BYTES_PER_ELEMENT);
-                              // for (let jj = 0; jj < floatData.length; ++jj) {
-                              //   floatData[jj] = d2.getFloat32(jj * Float32Array.BYTES_PER_ELEMENT, true);
-                              // }
-                              // console.log("LENGTH IS", floatData.length)
-                              // let buffer = audioCtx.createBuffer(2, floatData.length, SAMPLE_RATE*2);
-                              // buffer.getChannelData(0).set(floatData);
-                              // buffer.getChannelData(1).set(floatData);
-                              // let source = audioCtx.createBufferSource();
-                              // source.buffer = buffer;
-                              // source.connect(audioCtx.destination);
-                              // source.start(self.startTime);
-                              
-                              // self.startTime += buffer.duration;
-
-
-                            // let arrayBuffer = new ArrayBuffer(value.length)
-                            // var bufferView = new Uint8Array(arrayBuffer)
-                            // for(let i = 0; i < value.length; i++) {
-                            //   bufferView[i] = value[i]
-                            // }
-                            // audioCtx.decodeAudioData(arrayBuffer, function(buffer: any) {
-                            //   console.log("GETTING BUFFER", buffer )
-                            //   var source = audioCtx.createBufferSource();
-                            //   source.buffer = buffer;
-                            //   source.connect(audioCtx.destination);
-                      
-                            //   source.start(self.startTime);
-                            //   self.startTime += buffer.duration;
-                            // });
-                            //}
-                            //self.queueAudioBuffer(value, index);
                             return pump();
                           });
                         }
@@ -354,8 +281,8 @@ class Remixer extends React.Component<any, any> {
                     </div>
                 </div>) : 
                 <div>
-                    <div onClick={() => this.displayTracks('remix-1')}>REMIX 1</div>
-                    <div onClick={() => this.displayTracks('remix-2')}>REMIX 2</div>
+                    <div onClick={() => this.displayTracks('remix-1')}>REMIX </div>
+                    {/* <div onClick={() => this.displayTracks('remix-2')}>REMIX 2</div> */}
                 </div>
     }
             </div>)
