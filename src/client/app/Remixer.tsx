@@ -1,5 +1,6 @@
 import React from 'react';
 import AudioTrack from './components/AudioTrack';
+import styles from "./remixer.css";
 
 export const SAMPLE_RATE = 44100
 
@@ -50,7 +51,7 @@ class Remixer extends React.Component<any, any> {
         this.trackScheduledStatus = {}
     }
 
-    initialiseStartTime() {
+    initialiseStartTime = () =>{
       let {noOfLayers} = this.state;
       let {audioCtx} = this.props;
       let startTime = audioCtx.currentTime + 0.5;
@@ -60,7 +61,7 @@ class Remixer extends React.Component<any, any> {
       this.started = true;
     }
 
-    collectBuffers(chunk: Uint8Array, index: number) {
+    collectBuffers = (chunk: Uint8Array, index: number) => {
       let {audioCtx} = this.props;
 
       // Convert PCM data stream from server to float32array which is used by web audio
@@ -80,23 +81,26 @@ class Remixer extends React.Component<any, any> {
       //console.log("TRACK DURATION for ", index, " is now", this.trackDuration[index] )
       if(this.trackDuration[index] > 5 && !this.trackScheduledStatus[index]) { // until it caches 5 sec of content
         this.trackScheduledStatus[index] = true
+        console.log("SCHEDULING BIFFER")
         this.scheduleBuffers(index)
       }
     }
 
-    scheduleBuffers(index: number) {
+    scheduleBuffers = (index: number) => {
       let {audioCtx} = this.props;
+      let self = this;
       if(!this.started) {
         this.initialiseStartTime()
       }
       let currentTrackStartTime = this.startTimerObj[index]
       let firstInBuffer = this.trackBuffer[index][0];
-
       if(firstInBuffer) {
         let bufferDuration = firstInBuffer.duration; 
         while(currentTrackStartTime + bufferDuration < currentTrackStartTime + this.lookAhead) {
           firstInBuffer = this.trackBuffer[index].shift()
-          if(!firstInBuffer) break;
+          if(!firstInBuffer) {
+            break;
+          }
           bufferDuration = firstInBuffer.duration;
           let bufferSource = audioCtx.createBufferSource();
           bufferSource.buffer = firstInBuffer;
@@ -105,16 +109,19 @@ class Remixer extends React.Component<any, any> {
           this.startTimerObj[index] += bufferDuration
           currentTrackStartTime = this.startTimerObj[index]
         }
-        this.trackSchedulers[index] = window.setTimeout(() => this.scheduleBuffers(index), this.schedulerFreq)
+        this.trackSchedulers[index] = window.setTimeout(() => {
+          self.scheduleBuffers(index)
+        }, self.schedulerFreq)
       } else {
         window.clearTimeout(this.trackSchedulers[index])
         // this timeout allows for buffers to get collected
-        this.trackSchedulers[index] = window.setTimeout(() => this.scheduleBuffers(index), 500)
+        this.trackSchedulers[index] = window.setTimeout(() => self.scheduleBuffers(index), 500)
       }
     }
 
     displayTracks = (type: string) =>{
         let {genre, duration} = this.state;
+        let {audioCtx} = this.props;
         let self: Remixer = this
         fetch(`http://localhost:8080/api/track/meta?genre=${genre}&duration=${duration}&type=${type}`).then(res => res.json()).then(data=>{
             let {layers} = data;
@@ -137,15 +144,23 @@ class Remixer extends React.Component<any, any> {
                             // When no more data needs to be consumed, close the stream
                             if (done) {
                               controller.close();
-                              
+                              console.log("DONE LOADING< CALL")
                               for(let key in self.trackSchedulers) {
+                                //self.scheduleBuffers(index)
                                 window.clearTimeout(self.trackSchedulers[key])
                               }
                               return;
                             }
                             // Enqueue the next data chunk into our target stream
                             if(!value) return
-                            controller.enqueue(value);  
+                            controller.enqueue(value); 
+                            // audioCtx.decodeAudioData(value.buffer).then((decodedData: any) => {
+                            //   // use the decoded data here
+                            //   console.log("GETTING DECODED DATA", decodedData )
+                            // }, (err: any) => {
+                            //   console.log("SOME ERROR IN DECODING", err)
+                            // }); 
+                            console.log("THE VALLUE GOT IS", value, " and the buffer is", value.buffer)
                             self.collectBuffers(value.buffer, index)
                             
                             return pump();
@@ -190,9 +205,9 @@ class Remixer extends React.Component<any, any> {
                                 // if(type == "remix-1"){
                                 //     sourceUrl = `/api/stream/${layer}`
                                 // }
-                               //return <AudioTrack type={type} showControls={true} source={sourceUrl} autoPlay={true} index={index} />
+                               //return <AudioTrack type={type} showControls={true} source={sourceUrl} autoPlay={false} index={index} />
 
-                                //return <AudioTrack type={type} showControls={true} source={sourceUrl} autoPlay={true} index={index} />
+                                //return <AudioTrack type={type} showControls={true} source={sourceUrl} autoPlay={false} index={index} />
                                 //return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
                             })
                         }
@@ -202,7 +217,7 @@ class Remixer extends React.Component<any, any> {
                     </div>
                 </div>) : 
                 <div>
-                    <div onClick={() => this.displayTracks('remix-1')}>REMIX </div>
+                    <div className={styles.remixBtn} onClick={() => this.displayTracks('remix-1')}>REMIX </div>
                     {/* <div onClick={() => this.displayTracks('remix-2')}>REMIX 2</div> */}
                 </div>
     }
