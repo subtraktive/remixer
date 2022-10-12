@@ -52,11 +52,11 @@ router.get('/', (req: Request, res: Response) => {
 const updateTheEmptyFile = (file: WriteStream, id: number) => {
     // WRITE TO WRITABLE STR   AM HERE 
     const path = getFilePath(id)
-    const readFile = fs.createReadStream(path, { highWaterMark: 1024 });
+    const readFile = fs.createReadStream(path, { highWaterMark: 1024*64 });
     const stat = fs.statSync(path)
     console.log(`THE CONTENT SIZE for ID: ${id} is`, stat.size)
     readFile.on('data', (chunk) => {
-        console.log("GOT CHUCNK LENGHT OF", chunk.length, " and the multiplye is", 64 * 1024)
+        console.log("GOT CHUCNK LENGHT OF", chunk.length, " and the multiplye is", 44 * 1024)
         //chunk.pipe(readFile)
     })
     readFile.pipe(file)
@@ -135,10 +135,11 @@ router.get('/stream/:layerId', async(req: Request, res: Response) => {
         writeFile.on('pipe', (data) => {
             chunkCount++
             chunkLength *= chunkCount;
-            console.log("NOW CHUNKLENGTH IS", chunkLength)
+            //console.log("NOW CHUNKLENGTH IS", chunkLength)
             data.pipe(res)
             //data.pipe(limiter).pipe(res) 
         })
+        console.log(`FINAL CHUNKLENGTH for ${id} IS`, chunkLength)
         updateTheEmptyFile(writeFile, count )
 
     } catch (e) {

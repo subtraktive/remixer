@@ -39,13 +39,10 @@ class StreamLimiter extends Stream  {
             let elapsed: number = now - (+this.tmpStartTime),
             assumedTime: number = (+this.tmpSentBytes) / this.limit,
             lag = assumedTime - elapsed;
-            console.log("THE LAG IS ------- ", lag, " and elapsed ", elapsed)
             if(lag > 0) {
                 this.locked = true;
                 this.emit('pause')
-                console.log("PAUSED++++++++++++++++")
                 setTimeout(() => {
-                    console.log("RESUMED================")
                     this.emit('resume')
                     this.locked = false;
                 }, lag)
