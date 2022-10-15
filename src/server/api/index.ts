@@ -53,8 +53,8 @@ const instrumentMap: instrumentMapType = {
 }
 
 const audioConfig: audioConfigType = {
-    'bass': __dirname + '/../../../audio/Bass-1.wav',
-    'drums': __dirname + '/../../../audio/DRUMS-1.wav'
+    'bass': __dirname + '/../../../audio/BASS_FULL.wav',
+    'drums': __dirname + '/../../../audio/DRUMS_FULL.wav'
 }
 
 const getFilePath = (id: number) => {
