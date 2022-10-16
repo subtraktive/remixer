@@ -1,14 +1,14 @@
 .buffered {
     height: 20px;
     position: relative;
-    background: #555;
-    width: 300px;
+    background: rgba(10, 10, 10, .2);
+    width: 100%;
 }
 
 #bufferedAmount {
     display: block;
     height: 100%;
-    background-color: #777;
+    background-color: rgba(10, 10, 10, .9);
     width: 0;
 }
 
@@ -16,7 +16,8 @@
     /* margin-top: -20px; */
     height: 20px;
     position: relative;
-    width: 300px;
+    width: 100%;
+    background-color: rgba(85, 153, 85, .2);
 }
 
 #progressAmount {
@@ -24,4 +25,11 @@
     height: 100%;
     background-color: #595;
     width: 0;
+}
+
+.layers {
+    width: 400px;
+    height: 80px;
+    border: 2px solid rgba(100, 100, 100, .4);
+    margin-bottom: 50px;
 }

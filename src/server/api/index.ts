@@ -90,59 +90,12 @@ const updateTheEmptyFile = (file: WriteStream, id: number, res: Response) => {
     const path = getFilePath(id)
     let count = 0;
     const readFile = fs.createReadStream(path, { highWaterMark: 1024*44 }); // 44kb so that we get the headers first
-    // if(!readerObj[id]){
-    //     readerObj[id] = new wav.Reader()
-    // }
-
-    // readerObj[id].on('format', function (format: any) {
-
-    //     // the WAVE header is stripped from the output of the reader
-    //     console.log("GOT FORMATE", format)
-    //     //readerObj[id].pipe(file);
-        
-    //     //format.pipe(file)
-    // });
-
-    // readerObj[id].once('readable', function () {
-    //     console.log('WaveHeader Size:\t%d', 12);
-    //     console.log('ChunkHeader Size:\t%d', 8);
-    //     console.log('FormatChunk Size:\t%d', readerObj[id].subchunk1Size);
-    //     console.log('RIFF ID:\t%s', readerObj[id].riffId);
-    //     console.log('Total Size:\t%d', readerObj[id].chunkSize);
-    //     console.log('Wave ID:\t%s', readerObj[id].waveId);
-    //     console.log('Chunk ID:\t%s', readerObj[id].chunkId);
-    //     console.log('Chunk Size:\t%d', readerObj[id].subchunk1Size);
-    //     console.log('Compression format is of type: %d', readerObj[id].audioFormat);
-    //     console.log('Channels:\t%d', readerObj[id].channels);
-    //     console.log('Sample Rate:\t%d', readerObj[id].sampleRate);
-    //     console.log('Bytes / Sec:\t%d', readerObj[id].byteRate);
-    //     console.log('wBlockAlign:\t%d', readerObj[id].blockAlign);
-    //     console.log('Bits Per Sample Point:\t%d', readerObj[id].bitDepth);
-    //     // TODO: this should end up being "44" or whatever the total length of the WAV
-    //     //       header is. maybe emit "format" at this point rather than earlier???
-    //     console.log('wavDataPtr: %d', 0);
-    //     console.log('wavDataSize: %d', readerObj[id].subchunk2Size);
-    //     console.log();
-    //     //readerObj[id].pipe(file);
-    //   });
-
-    //   readerObj[id].on('chunk', function (format: any) {
-
-    //     // the WAVE header is stripped from the output of the reader
-    //     console.log("GOT CHUNK", format)
-    //     //readerObj[id].pipe(file);
-        
-    //     //format.pipe(file)
-    // });
-      
 
     const stat = fs.statSync(path)
     console.log(`THE CONTENT SIZE for ID: ${id} is`, stat.size)
     res.setHeader('Content-Length', stat.size)
     readFile.on('data', (chunk: any) => {
-        //console.log("GOT CHUCNK LENGHT OF RED ######################", chunk.buffer, " and the multiplye is", 44 * 1024)
-        //chunk.pipe(readFile)
-        //chunk.pipe(file)
+        
         count++;
        if(count == 1) {
             console.log("THE FIRST SET OF HEADERS GOT HERE", chunk.buffer)
@@ -150,13 +103,7 @@ const updateTheEmptyFile = (file: WriteStream, id: number, res: Response) => {
             if(out.isError){
                 console.log("SOMETHIGN WENT WRONT WITH FHEADE", out.error)
             }
-            // var buffer = Buffer.from(chunk);
-            // var result = buffer.readUIntLE(0, chunk.length)
-            //console.log(" OR AYA _++++++++++++++++++++++++++++++", result)
-        } else {
-            //console.log("REST OF BUFFER ########################################", chunk.buffer)
-        }
-
+        } 
     })
     readFile.pipe(file)
     //readFile.pipe(readerObj[id]).pipe(file)

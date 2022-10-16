@@ -5,6 +5,8 @@ import Remixer from './app/Remixer';
 
 import { SAMPLE_RATE } from './app/Remixer';
 
+
+var AudioContext = window.AudioContext // Default
 const audioCtx = new AudioContext({
     sampleRate: SAMPLE_RATE
 });
