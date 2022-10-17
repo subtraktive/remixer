@@ -3,6 +3,7 @@
     position: relative;
     background: rgba(10, 10, 10, .2);
     width: 100%;
+    overflow: hidden;
 }
 
 #bufferedAmount {
@@ -18,6 +19,7 @@
     position: relative;
     width: 100%;
     background-color: rgba(85, 153, 85, .2);
+    overflow: hidden;
 }
 
 #progressAmount {

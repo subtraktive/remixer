@@ -18,23 +18,6 @@ const riffChunk = A.sequenceOf([
     A.str('WAVE')
 ])
 
-
-// const UpdateHeader = (options?: any)  => {
-    
-//     Transform.call(this, options);
-// }
-
-
-// UpdateHeader.prototype._transform = function(chunk: any, encoding: any, cb: Function) {
-//   // do something with chunk, then pass a modified chunk (or not)
-//   // to the downstream
-//   cb(null, chunk);
-// };
-
-
-
-
-
 import { Stream, Writable } from 'stream';
 
 interface instrumentMapType {
@@ -92,12 +75,10 @@ const updateTheEmptyFile = (file: WriteStream, id: number, res: Response) => {
     const readFile = fs.createReadStream(path, { highWaterMark: 1024*44 }); // 44kb so that we get the headers first
 
     const stat = fs.statSync(path)
-    console.log(`THE CONTENT SIZE for ID: ${id} is`, stat.size)
     res.setHeader('Content-Length', stat.size)
     readFile.on('data', (chunk: any) => {
-        
         count++;
-       if(count == 1) {
+        if(count == 1) {
             console.log("THE FIRST SET OF HEADERS GOT HERE", chunk.buffer)
             let out  = riffChunk.run(chunk.buffer)
             if(out.isError){
@@ -174,29 +155,18 @@ router.get('/stream/:layerId', async(req: Request, res: Response) => {
     console.log("STREAMING AUDIO =========", id )
     count++;
     try {
-
-        // var outputFileStream = new wav.FileWriter(`audio/audio-${id}.wav`, {
-        //     sampleRate: 44100,
-        //     channels: 2
-        //   });
-
         const writeFile = fs.createWriteStream(`audio/audio-${id}.wav`)
         const limiter = new StreamLimiter()
         const rand = Math.random()*100
         console.log("RAND IS", rand);
         limiter.setLimit(rand > 40 ? LIMIT_RATE: 5)
-        //const { stream, mime } = await getMimeType(writeFile);
         res.setHeader("Content-Type", "audio/wav; charset=utf-8")
-        //res.setHeader("Content-Transfer-Encoding", "binary")
         writeFile.on('pipe', (data: any) => {
             chunkCount++
             chunkLength *= chunkCount;
-            console.log("NOW CHUNKLENGTH received ============", data)
             data.pipe(res)
-            //data.pipe(limiter).pipe(res) 
         })
-        //console.log(`FINAL CHUNKLENGTH for ${id} IS`, chunkLength)
-        //updateTheEmptyFile(outputFileStream, count, res )
+
        updateTheEmptyFile(writeFile, count, res )
 
     } catch (e) {

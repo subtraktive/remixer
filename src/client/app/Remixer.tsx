@@ -29,6 +29,7 @@ interface writeBufferObj {
 const BUFFER_WRITE_SIZE  = 1024 * 44;
 const BUFFER_HEADER_SIZE = 1024 * 44;
 const TOTAL_BUFFER_SIZE = 79312; // in kb this should be dynamicall calculated later
+const TOTAL_TRACK_DURATION = 230; // secs
 
 class Remixer extends React.Component<any, any> {
 
@@ -47,6 +48,7 @@ class Remixer extends React.Component<any, any> {
     bufferPosition: startTimer
     headerBuffer: any[]
     progress: trackSourceNode
+    startBufferTime: number
 
     constructor(props: any) {
         super(props);
@@ -58,7 +60,7 @@ class Remixer extends React.Component<any, any> {
             genre: 'hiphop',
             duration: 30,
             type: 'remix-1',
-
+            loaded: {}
         }
         this.trackBuffer = []
         this.lookAhead = 200 //100 ms
@@ -75,6 +77,7 @@ class Remixer extends React.Component<any, any> {
         this.writeBuffer = {}
         this.bufferPosition = {}
         this.progress = {}
+        this.startBufferTime = 0
     }
 
     initialiseStartTime = () =>{
@@ -86,10 +89,12 @@ class Remixer extends React.Component<any, any> {
         this.totalTimeScheduled[i] = 0;
       }
       this.started = true;
+      this.startBufferTime = performance.now()
     }
 
     collectBuffers = (chunk: Uint8Array, index: number) => {
       let {audioCtx} = this.props;
+      let {duration } = this.state;
         // Convert PCM data stream from server to float32array which is used by web audio
         let d2 = new DataView(chunk.buffer);
         let floatAudioData = new Float32Array(d2.byteLength / Float32Array.BYTES_PER_ELEMENT);
@@ -106,29 +111,36 @@ class Remixer extends React.Component<any, any> {
 
         this.trackBuffer[index].push(buffer)
         this.trackBufferCache[index].push(buffer)
-        this.trackDuration[index] += d2.byteLength;
+        
         this.totalTimeScheduled[index] += buffer.duration;
-        //console.log("TRACK DURATION for ", index, " is now", this.trackDuration[index] )
+        //console.log("TRACK DURATION for ", index, " is now", this.totalTimeScheduled[index] )
         if(this.totalTimeScheduled[index] > 5 && !this.trackScheduledStatus[index]) { // until it caches 5 sec of content
-          console.log("ANY SCHEDULE HAPPNING??")
           this.trackScheduledStatus[index] = true
           this.scheduleBuffers(index)
         }
           
     }
 
+    hasStarted = () => {
+      console.log("CALLING ++++++++", this.started)
+      return this.started
+    }
+
     scheduleBuffers = (index: number, decodedData?: any) => {
       let {audioCtx} = this.props;
+      let {duration} = this.state;
       let self = this;
       if(!this.started) {
         this.initialiseStartTime()
       }
 
       let currentTrackStartTime = this.startTimerObj[index]
+      
       let firstInBuffer = this.trackBuffer[index][0];
-      if(firstInBuffer) {
+      if(firstInBuffer ) {
+        
         let bufferDuration = firstInBuffer.duration; 
-        while(currentTrackStartTime + bufferDuration < currentTrackStartTime + this.lookAhead) {
+        while((currentTrackStartTime + bufferDuration < currentTrackStartTime + this.lookAhead)  && currentTrackStartTime <= duration ) {
           firstInBuffer = this.trackBuffer[index].shift()
           if(!firstInBuffer) {
             break;
@@ -180,10 +192,8 @@ class Remixer extends React.Component<any, any> {
         this.writeBuffer[index].set(src.subarray(srcStart, end), bufferPos);
         srcStart += len;
         bufferPos += len;
-        console.log("THE BUFFER LEN IS", bufferLen, " and the pos came to", bufferPos)
         if (bufferPos === bufferLen) {
           bufferPos = 0;
-          console.log("THE END IS", end);
           this.headerBuffer[index] = true;
           this.collectBuffers(value, index)
         }
@@ -192,35 +202,28 @@ class Remixer extends React.Component<any, any> {
       this.bufferPosition[index] = bufferPos;
     }
 
-    setRAF = () => {
-      //this.trackDuration[index] 
-      //let {progress} = this.state;
-      for(let key in this.totalTimeScheduled) {
-        if(!this.trackSourceNodes[key]) {
-          //console.log("KEY WILL BE INDEX", this.totalTimeScheduled[key], " and the duration is", this.trackDuration[key])
-          this.progress[key] = ((this.trackDuration[key] / 1024) / TOTAL_BUFFER_SIZE )
-          // this.setState({
-          //   progress
-          // })
-          console.log("THE PROGRESS IS", this.progress)
-          window.requestAnimationFrame(this.setRAF)
-        } else {
-          console.log("DONE +++++++++++++++++++++++++")
-        }
-      }
+    getProgress(index: number): number {
+      let {duration} = this.state;
+      this.progress[index] = (this.startTimerObj[index] / duration)*100
+      
+      return this.progress[index]
     }
 
     displayTracks = (type: string) =>{
-        let {genre, duration} = this.state;
+        let {genre, duration, loaded} = this.state;
         let {audioCtx} = this.props;
         let self: Remixer = this
         fetch(`http://localhost:8080/api/track/meta?genre=${genre}&duration=${duration}&type=${type}`).then(res => res.json()).then(data=>{
             let {layers} = data;
             let rafStarted = false
+            layers.forEach((index: number) => {
+              loaded[index] = false
+            })
             this.setState({
               noOfLayers: layers.length,
               showTracks: true,
-              layers
+              layers,
+              loaded
             })
             
             layers.map((layer: any, index: number) => { 
@@ -242,23 +245,20 @@ class Remixer extends React.Component<any, any> {
                             // When no more data needs to be consumed, close the stream
                             if (done) {
                               controller.close();
-                              self.trackSourceNodes[index] = true;
-                              console.log(`DONE LOADING for ${index} total kb`, (self.totalTimeScheduled[index]/60), " and the total kb is", self.trackDuration[index]/1024)
+                              //self.trackSourceNodes[index] = true;
+                              loaded[index] = true
+                              //console.log(`DONE LOADING for ${index} total kb`, (self.totalTimeScheduled[index]/60), " and the total kb is", self.trackDuration[index]/1024)
                               for(let key in self.trackSchedulers) {
-                                //self.scheduleBuffers(index)
                                 window.clearTimeout(self.trackSchedulers[key])
                               }
+                              self.setState({
+                                loaded
+                              })
                               return;
                             }
                             // Enqueue the next data chunk into our target stream
                             if(!value) return
                             controller.enqueue(value); 
-                            //self.collectBuffers(value.buffer, index)
-                            // if(!rafStarted) {
-                            //   rafStarted = true
-                            //   window.requestAnimationFrame(self.setRAF)
-                            // }
-                            
                             self._readIntoBuffer(value, done, index)
                            //window.setTimeout(() => self._readIntoBuffer(value, done, index));
                             return pump();
@@ -290,7 +290,7 @@ class Remixer extends React.Component<any, any> {
 
 
     render() {
-        let {showTracks, layers, id, type} = this.state;
+        let {showTracks, layers, id, type, loaded, duration} = this.state;
         //console.log("PROGRESS IS", progress)
         return (<div>
                 { showTracks ? 
@@ -303,8 +303,7 @@ class Remixer extends React.Component<any, any> {
                                 // if(type == "remix-1"){
                                 //     sourceUrl = `/api/stream/${layer}`
                                 // }
-                                console.log("THE SOURCEURL IS", sourceUrl)
-                               return <AudioTrack progress={this.progress[index]} type={type} showControls={true} source={sourceUrl} autoPlay={false} index={index} />
+                               return <AudioTrack hasStarted={this.hasStarted} duration={duration} getProgress={this.getProgress.bind(this, index)} type={type} showControls={true} loaded={loaded[index]} source={sourceUrl} autoPlay={false} index={index} />
 
                                 //return <AudioTrack type={type} showControls={true} source={sourceUrl} autoPlay={false} index={index} />
                                 //return <audio id={`layer-${index}`} autoPlay={true} controls src={`/api/stream/${layer}`}>`TRACK-${index}`</audio>
